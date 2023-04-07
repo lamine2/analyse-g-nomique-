@@ -1,0 +1,31 @@
+import os
+import subprocess
+
+# Fichier FASTQ en entrée
+fastq_file = "donnees_metagenomiques.fastq"
+
+# 1. Contrôle qualité avec FastQC
+fastqc_command = "fastqc -o fastqc_results " + fastq_file
+subprocess.run(fastqc_command, shell=True)
+
+# 2. Élimination des adaptateurs avec Cutadapt
+trimmed_fastq_file = "donnees_metagenomiques_trimmed.fastq"
+cutadapt_command = "cutadapt -a ADAPTATEURS -o " + trimmed_fastq_file + " " + fastq_file
+subprocess.run(cutadapt_command, shell=True)
+
+# 3. Alignement sur un génome de référence avec Bowtie2
+reference_genome = "genome_reference.fasta"
+aligned_sam_file = "donnees_metagenomiques_aligned.sam"
+bowtie2_command = "bowtie2 -x " + reference_genome + " -U " + trimmed_fastq_file + " -S " + aligned_sam_file
+subprocess.run(bowtie2_command, shell=True)
+
+# 4. Identification de taxons avec Kraken2
+kraken2_db = "kraken2_database"
+kraken2_report_file = "kraken2_report.txt"
+kraken2_command = "kraken2 --db " + kraken2_db + " --report " + kraken2_report_file + " " + aligned_sam_file
+subprocess.run(kraken2_command, shell=True)
+
+# 5. Annotation fonctionnelle avec HUMAnN3
+humann3_output_dir = "humann3_output"
+humann3_command = "humann --input " + trimmed_fastq_file + " --output " + humann3_output_dir
+subprocess.run(humann3_command, shell=True)
